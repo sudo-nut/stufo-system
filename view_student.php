@@ -8,7 +8,7 @@ require_once 'students.php';
 
 startSecureSession();
 
-$id = $_GET['id'] ?? 0;
+$id = isset($_GET['id']) && is_numeric($_GET['id']) ? intval($_GET['id']) : 0;
 $student = getStudentById($id);
 
 if (!$student) {
@@ -78,12 +78,18 @@ if (!$student) {
                 
                 <div class="detail-row">
                     <strong>Registered:</strong>
-                    <span><?php echo date('F j, Y', strtotime($student['created_at'])); ?></span>
+                    <span><?php 
+                        $created_timestamp = strtotime($student['created_at']);
+                        echo $created_timestamp ? date('F j, Y', $created_timestamp) : 'N/A';
+                    ?></span>
                 </div>
                 
                 <div class="detail-row">
                     <strong>Last Updated:</strong>
-                    <span><?php echo date('F j, Y', strtotime($student['updated_at'])); ?></span>
+                    <span><?php 
+                        $updated_timestamp = strtotime($student['updated_at']);
+                        echo $updated_timestamp ? date('F j, Y', $updated_timestamp) : 'N/A';
+                    ?></span>
                 </div>
             </div>
 

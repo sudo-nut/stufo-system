@@ -16,7 +16,10 @@ function getDBConnection() {
     
     // Check connection
     if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
+        // Log the actual error for debugging (in production, log to file)
+        error_log("Database connection failed: " . $conn->connect_error);
+        // Show generic error to user
+        die("Database connection failed. Please contact the system administrator.");
     }
     
     // Set charset to UTF-8
