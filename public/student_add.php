@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Insert student using prepared statement
             $stmt = $conn->prepare("INSERT INTO STUDENT (matric_no, name, ic_no, gender, programme, faculty, semester, email, phone_no, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssssssssss", $matric_no, $name, $ic_no, $gender, $programme, $faculty, $semester, $email, $phone_no, $address);
+            $stmt->bind_param("ssssssisss", $matric_no, $name, $ic_no, $gender, $programme, $faculty, $semester, $email, $phone_no, $address);
             
             if ($stmt->execute()) {
                 $success = 'Student added successfully!';

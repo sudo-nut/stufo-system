@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Update student using prepared statement
             $stmt = $conn->prepare("UPDATE STUDENT SET matric_no = ?, name = ?, ic_no = ?, gender = ?, programme = ?, faculty = ?, semester = ?, email = ?, phone_no = ?, address = ? WHERE student_id = ?");
-            $stmt->bind_param("ssssssisssi", $matric_no, $name, $ic_no, $gender, $programme, $faculty, $semester, $email, $phone_no, $address, $student_id);
+            $stmt->bind_param("sssssisssi", $matric_no, $name, $ic_no, $gender, $programme, $faculty, $semester, $email, $phone_no, $address, $student_id);
             
             if ($stmt->execute()) {
                 if ($stmt->affected_rows > 0) {
