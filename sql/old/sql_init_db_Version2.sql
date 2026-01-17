@@ -1,11 +1,11 @@
 -- sql/init_db.sql
--- Updated schema: DBASSIGNMENT, USER and STUDENT (drops name, phone_no, address)
+-- Updated schema: DBASSIGNMENT, USER and STUDENT tables per requested layout
 CREATE DATABASE IF NOT EXISTS `DBASSIGNMENT`
   DEFAULT CHARACTER SET utf8mb4
   DEFAULT COLLATE utf8mb4_general_ci;
 USE `DBASSIGNMENT`;
 
--- USER table (status column added)
+-- USER table (added status column)
 CREATE TABLE IF NOT EXISTS `USER` (
   user_id INT AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(50) NOT NULL UNIQUE,
@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS `USER` (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- STUDENT table (keeps matric_no and ic_no, adds requested fields)
+-- STUDENT table
+-- Contains the requested fields (uppercase names) plus the previous columns retained.
 CREATE TABLE IF NOT EXISTS `STUDENT` (
   STUDENTID INT(15) NOT NULL AUTO_INCREMENT PRIMARY KEY,
   FULLNAME VARCHAR(80) NOT NULL COLLATE utf8mb4_general_ci,
@@ -31,10 +32,14 @@ CREATE TABLE IF NOT EXISTS `STUDENT` (
   CONTACTNO VARCHAR(12) NOT NULL COLLATE utf8mb4_general_ci,
   EMAIL VARCHAR(40) NOT NULL COLLATE utf8mb4_general_ci,
 
+  -- Previous columns kept (lowercase names)
   matric_no VARCHAR(20) NOT NULL UNIQUE,
+  name VARCHAR(100) NOT NULL,
   ic_no VARCHAR(20) NOT NULL UNIQUE,
   programme VARCHAR(100),
   faculty VARCHAR(100),
   semester INT,
+  phone_no VARCHAR(20),
+  address TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

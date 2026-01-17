@@ -1,45 +1,60 @@
 <?php
-/**
- * seed_users.php
- * Seeds the USER table with initial admin and student users
- */
-
+// scripts/seed_users.php
+// Usage: php scripts/seed_users.php
+// Seeds admin01/admin123 and student01/student123 into DBASSIGNMENT->USER table
 require_once __DIR__ . '/../public/db.php';
 
-// Create admin user
-$admin_username = 'admin';
-$admin_password = password_hash('admin123', PASSWORD_DEFAULT);
-$admin_fullname = 'System Administrator';
-$admin_role = 'admin';
+$users = [
+    [
+        'username' => 'admin01',
+        'password' => 'admin123',
+        'full_name' => 'System Administrator',
+        'role' => 'admin',
+        'status' => 'ACTIVE'
+    ],
+    [
+        'username' => 'student01',
+        'password' => 'student123',
+        'full_name' => 'Student User',
+        'role' => 'student',
+        'status' => 'ACTIVE'
+    ]
+];
 
-$stmt = $conn->prepare("INSERT INTO USER (username, password, full_name, role) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE username=username");
-$stmt->bind_param("ssss", $admin_username, $admin_password, $admin_fullname, $admin_role);
+foreach ($users as $u) {
+    $username = $u['username'];
+    $plaintext = $u['password'];
+    $full_name = $u['full_name'];
+    $role = $u['role'];
+    $status = $u['status'];
+    $hashed = password_hash($plaintext, PASSWORD_DEFAULT);
 
-if ($stmt->execute()) {
-    echo "Admin user created successfully.\n";
-} else {
-    echo "Error creating admin user: " . $stmt->error . "\n";
+    // Check if user exists
+    $stmt = $conn->prepare("SELECT user_id FROM `USER` WHERE username = ?");
+    $stmt->bind_param('s', $username);
+    $stmt->execute();
+    $stmt->store_result();
+    if ($stmt->num_rows > 0) {
+        // update
+        $stmt->bind_result($user_id);
+        $stmt->fetch();
+        $stmt->close();
+
+        $uStmt = $conn->prepare("UPDATE `USER` SET password=?, full_name=?, role=?, status=? WHERE user_id=?");
+        $uStmt->bind_param('ssssi', $hashed, $full_name, $role, $status, $user_id);
+        $uStmt->execute();
+        $uStmt->close();
+        echo "Updated user: $username\n";
+    } else {
+        $stmt->close();
+        // insert
+        $iStmt = $conn->prepare("INSERT INTO `USER` (username, password, full_name, role, status) VALUES (?, ?, ?, ?, ?)");
+        $iStmt->bind_param('sssss', $username, $hashed, $full_name, $role, $status);
+        $iStmt->execute();
+        $iStmt->close();
+        echo "Inserted user: $username\n";
+    }
 }
 
-$stmt->close();
-
-// Create sample student user
-$student_username = 'student1';
-$student_password = password_hash('student123', PASSWORD_DEFAULT);
-$student_fullname = 'Sample Student';
-$student_role = 'student';
-
-$stmt = $conn->prepare("INSERT INTO USER (username, password, full_name, role) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE username=username");
-$stmt->bind_param("ssss", $student_username, $student_password, $student_fullname, $student_role);
-
-if ($stmt->execute()) {
-    echo "Student user created successfully.\n";
-} else {
-    echo "Error creating student user: " . $stmt->error . "\n";
-}
-
-$stmt->close();
 $conn->close();
-
-echo "User seeding completed.\n";
-?>
+echo "Seeding complete.\n";

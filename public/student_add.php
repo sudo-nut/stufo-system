@@ -1,171 +1,74 @@
 <?php
-/**
- * student_add.php
- * Add new student (Admin only with CSRF protection)
- */
-require_once 'db.php';
+require_once __DIR__ . '/header.php';
+require_once __DIR__ . '/db.php';
 
-// Require admin access
-require_admin();
+requireLogin();
+requireAdmin();
 
-$page_title = 'Add Student';
-$error = '';
-$success = '';
-
-// Handle form submission
+$errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Verify CSRF token
-    if (!isset($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
-        $error = 'Invalid CSRF token. Please try again.';
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        $errors[] = 'Invalid CSRF token.';
     } else {
-        // Get form data
+        $FULLNAME = trim($_POST['FULLNAME'] ?? '');
+        $ADDRESS1 = trim($_POST['ADDRESS1'] ?? '');
+        $ADDRESS2 = trim($_POST['ADDRESS2'] ?? '');
+        $POSTCODE = trim($_POST['POSTCODE'] ?? '');
+        $CITY = trim($_POST['CITY'] ?? '');
+        $STATE = trim($_POST['STATE'] ?? '');
+        $GENDER = trim($_POST['GENDER'] ?? '');
+        $RACE = trim($_POST['RACE'] ?? '');
+        $RELIGION = trim($_POST['RELIGION'] ?? '');
+        $CONTACTNO = trim($_POST['CONTACTNO'] ?? '');
+        $EMAIL = trim($_POST['EMAIL'] ?? '');
         $matric_no = trim($_POST['matric_no'] ?? '');
-        $name = trim($_POST['name'] ?? '');
         $ic_no = trim($_POST['ic_no'] ?? '');
-        $gender = $_POST['gender'] ?? '';
         $programme = trim($_POST['programme'] ?? '');
         $faculty = trim($_POST['faculty'] ?? '');
-        $semester = (int)($_POST['semester'] ?? 0);
-        $email = trim($_POST['email'] ?? '');
-        $phone_no = trim($_POST['phone_no'] ?? '');
-        $address = trim($_POST['address'] ?? '');
-        
-        // Validate required fields
-        if (empty($matric_no) || empty($name) || empty($ic_no) || empty($gender) || 
-            empty($programme) || empty($faculty) || $semester < 1) {
-            $error = 'Please fill in all required fields.';
-        } else {
-            // Insert student using prepared statement
-            $stmt = $conn->prepare("INSERT INTO STUDENT (matric_no, name, ic_no, gender, programme, faculty, semester, email, phone_no, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssssssisss", $matric_no, $name, $ic_no, $gender, $programme, $faculty, $semester, $email, $phone_no, $address);
-            
+        $semester = (int)($_POST['semester'] ?? 1);
+
+        if ($FULLNAME === '' || $matric_no === '' || $ic_no === '') {
+            $errors[] = 'Fullname, Matric and IC are required.';
+        }
+
+        if (empty($errors)) {
+            $stmt = $conn->prepare("INSERT INTO `STUDENT` (FULLNAME, ADDRESS1, ADDRESS2, POSTCODE, CITY, STATE, GENDER, RACE, RELIGION, CONTACTNO, EMAIL, matric_no, ic_no, programme, faculty, semester) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param('sssssssssssssssi',
+                $FULLNAME, $ADDRESS1, $ADDRESS2, $POSTCODE, $CITY, $STATE,
+                $GENDER, $RACE, $RELIGION, $CONTACTNO, $EMAIL,
+                $matric_no, $ic_no, $programme, $faculty, $semester
+            );
             if ($stmt->execute()) {
-                $success = 'Student added successfully!';
-                $new_student_id = $stmt->insert_id;
-                
-                // Redirect to view page after short delay
-                header("refresh:2;url=student_view.php?id=$new_student_id");
+                header('Location: students.php');
+                exit();
             } else {
-                if ($conn->errno === 1062) { // Duplicate entry error
-                    $error = 'Matric number or IC number already exists.';
-                } else {
-                    $error = 'Error adding student: ' . $stmt->error;
-                }
+                $errors[] = 'Insert failed: ' . $stmt->error;
             }
-            
             $stmt->close();
         }
     }
 }
-
-include 'header.php';
 ?>
-
-<div class="content-section">
-    <div class="section-header">
-        <h1>Add New Student</h1>
-        <a href="students.php" class="btn btn-secondary">Back to List</a>
-    </div>
-    
-    <?php if ($error): ?>
-        <div class="alert alert-error"><?php echo h($error); ?></div>
-    <?php endif; ?>
-    
-    <?php if ($success): ?>
-        <div class="alert alert-success"><?php echo h($success); ?> Redirecting...</div>
-    <?php endif; ?>
-    
-    <form method="POST" action="student_add.php" class="student-form">
-        <input type="hidden" name="csrf_token" value="<?php echo h(generate_csrf_token()); ?>">
-        
-        <div class="form-section">
-            <h3>Personal Information</h3>
-            
-            <div class="form-group">
-                <label for="matric_no">Matric Number: <span class="required">*</span></label>
-                <input type="text" id="matric_no" name="matric_no" required 
-                       value="<?php echo h($_POST['matric_no'] ?? ''); ?>" 
-                       placeholder="e.g., A000001">
-            </div>
-            
-            <div class="form-group">
-                <label for="name">Full Name: <span class="required">*</span></label>
-                <input type="text" id="name" name="name" required 
-                       value="<?php echo h($_POST['name'] ?? ''); ?>" 
-                       placeholder="e.g., Muhammad Ali Abdullah">
-            </div>
-            
-            <div class="form-group">
-                <label for="ic_no">IC Number: <span class="required">*</span></label>
-                <input type="text" id="ic_no" name="ic_no" required 
-                       value="<?php echo h($_POST['ic_no'] ?? ''); ?>" 
-                       placeholder="e.g., 990101-12-1234">
-            </div>
-            
-            <div class="form-group">
-                <label for="gender">Gender: <span class="required">*</span></label>
-                <select id="gender" name="gender" required>
-                    <option value="">Select Gender</option>
-                    <option value="Male" <?php echo (($_POST['gender'] ?? '') === 'Male') ? 'selected' : ''; ?>>Male</option>
-                    <option value="Female" <?php echo (($_POST['gender'] ?? '') === 'Female') ? 'selected' : ''; ?>>Female</option>
-                </select>
-            </div>
-        </div>
-        
-        <div class="form-section">
-            <h3>Academic Information</h3>
-            
-            <div class="form-group">
-                <label for="programme">Programme: <span class="required">*</span></label>
-                <input type="text" id="programme" name="programme" required 
-                       value="<?php echo h($_POST['programme'] ?? ''); ?>" 
-                       placeholder="e.g., Computer Science">
-            </div>
-            
-            <div class="form-group">
-                <label for="faculty">Faculty: <span class="required">*</span></label>
-                <input type="text" id="faculty" name="faculty" required 
-                       value="<?php echo h($_POST['faculty'] ?? ''); ?>" 
-                       placeholder="e.g., Faculty of Computing">
-            </div>
-            
-            <div class="form-group">
-                <label for="semester">Semester: <span class="required">*</span></label>
-                <input type="number" id="semester" name="semester" required min="1" max="14" 
-                       value="<?php echo h($_POST['semester'] ?? ''); ?>" 
-                       placeholder="e.g., 1">
-            </div>
-        </div>
-        
-        <div class="form-section">
-            <h3>Contact Information</h3>
-            
-            <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" 
-                       value="<?php echo h($_POST['email'] ?? ''); ?>" 
-                       placeholder="e.g., student@example.com">
-            </div>
-            
-            <div class="form-group">
-                <label for="phone_no">Phone Number:</label>
-                <input type="text" id="phone_no" name="phone_no" 
-                       value="<?php echo h($_POST['phone_no'] ?? ''); ?>" 
-                       placeholder="e.g., 012-3456789">
-            </div>
-            
-            <div class="form-group">
-                <label for="address">Address:</label>
-                <textarea id="address" name="address" rows="3" 
-                          placeholder="e.g., 123 Jalan Example, 50000 Kuala Lumpur"><?php echo h($_POST['address'] ?? ''); ?></textarea>
-            </div>
-        </div>
-        
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Add Student</button>
-            <a href="students.php" class="btn btn-secondary">Cancel</a>
-        </div>
-    </form>
-</div>
-
-<?php include 'footer.php'; ?>
+<h1>Add Student</h1>
+<?php foreach ($errors as $e) echo "<div class=\"error\">".htmlspecialchars($e)."</div>"; ?>
+<form method="post" action="student_add.php" class="form">
+  <input type="hidden" name="csrf_token" value="<?= $csrf_token ?>">
+  <label>Fullname<input type="text" name="FULLNAME" required></label>
+  <label>Matric No<input type="text" name="matric_no" required></label>
+  <label>IC No<input type="text" name="ic_no" required></label>
+  <label>Programme<input type="text" name="programme"></label>
+  <label>Faculty<input type="text" name="faculty"></label>
+  <label>Semester<input type="number" name="semester" min="1" max="12" value="1"></label>
+  <label>Address 1<input type="text" name="ADDRESS1"></label>
+  <label>Address 2<input type="text" name="ADDRESS2"></label>
+  <label>Postcode<input type="text" name="POSTCODE"></label>
+  <label>City<input type="text" name="CITY"></label>
+  <label>State<input type="text" name="STATE"></label>
+  <label>Gender<input type="text" name="GENDER"></label>
+  <label>Race<input type="text" name="RACE"></label>
+  <label>Religion<input type="text" name="RELIGION"></label>
+  <label>Contact No<input type="text" name="CONTACTNO"></label>
+  <label>Email<input type="email" name="EMAIL"></label>
+  <button type="submit">Add</button>
+</form>
+<?php require_once __DIR__ . '/footer.php'; ?>
