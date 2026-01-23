@@ -1,0 +1,40 @@
+-- sql/init_db.sql
+-- Updated schema: DBASSIGNMENT, USER and STUDENT (drops name, phone_no, address)
+CREATE DATABASE IF NOT EXISTS `DBASSIGNMENT`
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_general_ci;
+USE `DBASSIGNMENT`;
+
+-- USER table (status column added)
+CREATE TABLE IF NOT EXISTS `USER` (
+  user_id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  full_name VARCHAR(100) NOT NULL,
+  role ENUM('admin', 'student') NOT NULL,
+  status ENUM('ACTIVE','INACTIVE') NOT NULL DEFAULT 'ACTIVE',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- STUDENT table (keeps matric_no and ic_no, adds requested fields)
+CREATE TABLE IF NOT EXISTS `STUDENT` (
+  STUDENTID INT(15) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  FULLNAME VARCHAR(80) NOT NULL COLLATE utf8mb4_general_ci,
+  ADDRESS1 VARCHAR(40) NOT NULL COLLATE utf8mb4_general_ci,
+  ADDRESS2 VARCHAR(40) NOT NULL COLLATE utf8mb4_general_ci,
+  POSTCODE VARCHAR(6) NOT NULL COLLATE utf8mb4_general_ci,
+  CITY VARCHAR(30) NOT NULL COLLATE utf8mb4_general_ci,
+  STATE VARCHAR(30) NOT NULL COLLATE utf8mb4_general_ci,
+  GENDER VARCHAR(1) NOT NULL COLLATE utf8mb4_general_ci,
+  RACE VARCHAR(20) NOT NULL COLLATE utf8mb4_general_ci,
+  RELIGION VARCHAR(20) NOT NULL COLLATE utf8mb4_general_ci,
+  CONTACTNO VARCHAR(12) NOT NULL COLLATE utf8mb4_general_ci,
+  EMAIL VARCHAR(40) NOT NULL COLLATE utf8mb4_general_ci,
+
+  matric_no VARCHAR(20) NOT NULL UNIQUE,
+  ic_no VARCHAR(20) NOT NULL UNIQUE,
+  programme VARCHAR(100),
+  faculty VARCHAR(100),
+  semester INT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
